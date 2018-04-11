@@ -94,26 +94,41 @@
 	function loopFeeds()
 	{
 		require('db.php');
-		$memberId		= mysqli_real_escape_string($db, $_POST['memberId']);
 		$sql = $investDb->query("SELECT F.id feedId, F.feedForumId, F.feedTitle, U.name feedBy, U.userImage feedByImg,
 		 F.feedLikes, F.feedComents, F.createdDate feedDate,F.feedContent FROM investments.feeds F INNER JOIN uplus.users U ON F.createdBy = U.id")or die(mysqli_error($investDb));
 		$feeds = array();
-		while ($feed = mysqli_fetch_array($sql))
+		while ($row = mysqli_fetch_array($sql))
 		{
 			$feeds[] = array(
-				"feedId"		=> $feed['feedId'],
-				"feedForumId"	=> $feed['feedForumId'],
-				"feedTitle"		=> $feed['feedTitle'],
-				"feedBy"		=> $feed['feedBy'],
-				"feedByImg"		=> $feed['feedByImg'],
-				"feedLikes"		=> $feed['feedLikes'],
+				"feedId"		=> $row['feedId'],
+				"feedForumId"	=> $row['feedForumId'],
+				"feedTitle"		=> $row['feedTitle'],
+				"feedBy"		=> $row['feedBy'],
+				"feedByImg"		=> $row['feedByImg'],
+				"feedLikes"		=> $row['feedLikes'],
 				"feedLikeStatus"=> 'NO', "feedComments" => "12",
-				"feedDate"		=> $feed['feedDate'],
-				"feedContent"	=> $feed['feedContent'],
-				"feedDate"		=> $feed['feedDate']
+				"feedDate"		=> $row['feedDate'],
+				"feedContent"	=> $row['feedContent'],
+				"feedDate"		=> $row['feedDate']
 			);
 		}
-		header('Content-Type: application/json');
+		foreach ($feeds as $i => $feed) 
+		{
+			$feedId 	= $feed['feedId'];
+			$images 	= array();
+            $sql 		= $investDb->query("SELECT imgUrl FROM investmentimg")or die (mysqli_error($investDb));
+            while($rowImage = mysqli_fetch_array($sql))
+            {
+                $images[]  = array(
+                    "imgUrl"         => $rowImage['imgUrl']
+                );
+            }
+            $feeds[$i]['feedImage'] = $images;
+		}
+		
+        mysqli_close($db);
+        mysqli_close($eventDb);
+        header('Content-Type: application/json');
 		$feeds = json_encode($feeds);
 		echo $feeds;
 	}
